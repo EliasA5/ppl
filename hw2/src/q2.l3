@@ -1,30 +1,72 @@
 (define append 
   (lambda(lst1 lst2)
-      @TODO
+      (if (empty? lst1)
+          lst2
+          (cons (car lst1) (append (cdr lst1)npo lst2))
+      )    
   )
 )
 
 (define reverse 
   (lambda (lst)
-        @TODO
+        (if (empty? lst)
+            lst
+            (append (reverse (cdr lst)) (cons (car lst) '())))
   )
 )
 
 (define duplicate-items
    (lambda(lst dup-count)
-      @TODO
+      (if (empty? lst)
+          lst
+          (append (add-items '() (car lst) (car dup-count))
+                  (duplicate-items (cdr lst) (cycle dup-count)))
+      )    
    )
+)
+
+(define cycle
+  (lambda(lst)
+    (if (empty? lst)
+        lst
+        (append (cdr lst) (cons (car lst) '()))
+    )
+  )
+)
+
+(define add-items
+  (lambda(lst element number)
+    (if (= number 0)
+            lst
+           (add-items (append lst (cons element '())) element (- number 1))
+    )  
+  )
 )
 
 
 (define payment
   (lambda (n coins-lst)
-        @TODO
+        (if (= n 0)
+            1
+            (if (< n 0)
+                0
+                (if (empty? coins-lst)
+                    0
+                    (+ (payment (- n (car coins-lst)) (cdr coins-lst))
+                       (payment n (cdr coins-lst)))
+                )
+            )    
+        )   
   )
 )
                                
 (define compose-n
-  (lambda( f n)
-        @TODO
+  (lambda(f n)
+        (if (= n 1)
+            f
+            (lambda(y)
+              (f ((compose-n f (- n 1)) y))
+            )
+        )  
   )
 )
