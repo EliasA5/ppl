@@ -2,7 +2,7 @@
   (lambda(lst1 lst2)
       (if (empty? lst1)
           lst2
-          (cons (car lst1) (append (cdr lst1)npo lst2))
+          (cons (car lst1) (append (cdr lst1) lst2))
       )    
   )
 )
