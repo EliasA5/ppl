@@ -52,20 +52,72 @@
   )
 )
 
-
 (define payment
-  (lambda (n coins-lst)
-        (if (= n 0)
-            1
-            (if (< n 0)
+  (lambda (n coins)
+    (if (empty? coins)
+        0
+        (ways n (make-lists coins '()))
+    )
+  )
+)
+
+(define ways
+  (lambda (n coins)
+    (if (= n 0)
+        1
+        (if (< n 0)
+            0
+            (if (empty? coins)
                 0
-                (if (empty? coins-lst)
-                    0
-                    (+ (payment (- n (car coins-lst)) (cdr coins-lst))
-                       (payment n (cdr coins-lst)))
-                )
-            )    
-        )   
+                (way n (cdr (car coins)) 0 (car (car coins)) (cdr coins))
+            )
+        )
+    )
+  )
+)
+
+(define way
+  (lambda (n stop i ele coins)
+    (if (< i stop)
+        (+ (ways (- n (* i ele)) coins) (way n stop (+ 1 i) ele coins))
+        (ways (- n (* i ele)) coins)
+    )
+  )
+)
+
+(define make-lists
+  (lambda (lst1 lst2)
+    (if (empty? lst1)
+        lst2
+        (make-lists (cdr lst1) (add-to (car lst1) lst2))
+    )
+  )
+)
+
+(define add-to
+  (lambda (ele lst)
+    (if (empty? lst)
+        (cons (cons ele 1) '())
+        (if (= (car (car lst)) ele)
+            (append (cons (cons ele (+ 1 (cdr (car lst)) )) '()) (cdr lst))
+            (append (cons (car lst) '()) (add-to ele (cdr lst)))
+        )
+    )
+  )
+)
+
+(define remove-from
+  (lambda (ele lst)
+    (if (empty? lst)
+        '()
+        (if (not (= (car (car lst)) ele))
+            (append (cons (car lst) '()) (remove-from ele (cdr lst)))
+            (if (= (- (cdr (car lst)) 1) 0)
+                (cdr lst)
+                (append (cons (cons ele (- (cdr (car lst)) 1)) '()) (cdr lst))
+            )
+        )
+    )
   )
 )
                                
