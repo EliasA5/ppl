@@ -7,6 +7,15 @@
   )
 )
 
+(define empty?
+  (lambda(lst)
+    (if (eq? lst '())
+        #t
+        #f
+    )
+  )
+)
+
 (define reverse 
   (lambda (lst)
         (if (empty? lst)
