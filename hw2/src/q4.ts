@@ -43,18 +43,16 @@ const unparseProcExpToPython = (exp: ProcExp): Result<string> =>
 const unparseAppToPython = (exp: AppExp): Result<string> =>
     {
         const op = operatorToString(exp.rator);
-        const first = exp.rands.length !== 0 ? l2ToPython(exp.rands[0]) : makeFailure('no operands');
         
-        return  op === 'not'&& exp.rands.length === 1 && isOk(first) ? makeOk(`(not ${first.value})`): 
-                op === 'boolean?' && exp.rands.length === 1 && isOk(first) ? makeOk(`(lambda x : (type(x) == bool) ${first.value}`):
-                op === 'number?' && exp.rands.length === 1 && isOk(first) ? makeOk(`(lambda x : (type(x) == int) ${first.value}`) :
-                op === 'eq?' && exp.rands.length === 2 ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`(${s.join(` == `)})`)) :
+        return  op === 'not'&& exp.rands.length === 1 ? bind(l2ToPython(exp.rands[0]), s => makeOk(`(not ${s})`)): 
+                op === 'boolean?' && exp.rands.length === 1 ? bind(l2ToPython(exp.rands[0]), s => makeOk(`(lambda x : (type(x) == bool) ${s}`)):
+                op === 'number?' && exp.rands.length === 1 ? bind(l2ToPython(exp.rands[0]), s => makeOk(`(lambda x : (type(x) == int) ${s}`)) :
+                (op === 'eq?' || op === '=') && exp.rands.length === 2 ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`(${s.join(` == `)})`)) :
                 op === '<' && exp.rands.length === 2 ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`(${s.join(` < `)})`)):
                 op === '>' && exp.rands.length === 2 ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`(${s.join(` > `)})`)):
-                op === '=' && exp.rands.length === 2 ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`(${s.join(` == `)})`)) :
                 ['-', '+', '/', '*', 'and', 'or'].includes(op) ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`(${s.join(` ${op} `)})`)) :
                 isVarRef(exp.rator) ? bind(mapResult(l2ToPython, exp.rands), (s: string[]): Result<string> => makeOk(`${op}(${s.join(",")})`)) :
-                isValue(exp.rator) ? makeOk(op):
+                isValue(exp.rator) ? makeOk((valueToString(exp.rator))):
                 isProcExp(exp.rator) ? bind(l2ToPython(exp.rator), s_1 => bind(mapResult(l2ToPython, exp.rands), s_2 => makeOk(`${s_1}(${s_2})`))):
                 makeFailure('bad operand');
     };
@@ -62,5 +60,4 @@ const unparseAppToPython = (exp: AppExp): Result<string> =>
 const operatorToString = (op: CExp): string =>
     isPrimOp(op) ? op.op:
     isVarRef(op) ? op.var:
-    isValue(op) ? valueToString(op):
     'failure';
