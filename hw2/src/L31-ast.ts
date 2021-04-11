@@ -243,7 +243,6 @@ const parseLetExp = (bindings: Sexp, body: Sexp[]): Result<LetExp> => {
         (bindingsResult, mapResult(parseL31CExp, body));
 }
 
-import { isOk } from "../shared/result";
 // L31 //
 export const parseClassExp = (fields: Sexp, methods: Sexp[]): Result<ClassExp> =>{
 if (methods.length !== 1 || !isGoodBindings(methods[0])){
