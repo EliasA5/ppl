@@ -30,7 +30,7 @@ Type: [Exp | Program] => Result<Exp | Program>
 export const L31ToL3 = (exp: Exp | Program): Result<Exp | Program> =>
 isExp(exp) ? makeOk(rewriteAllClass2ProcExp(exp)) : 
 isProgram(exp) ? makeOk(makeProgram(map(rewriteAllClass2ProcExp, exp.exps))) :
-exp;
+makeFailure('expression is not Exp or Program');
 
 const rewriteAllClass2ProcExp = (exp: Exp): Exp =>
 isCExp(exp) ? rewriteAllClass2ProcCExp(exp) :
@@ -43,10 +43,10 @@ isLitExp(exp) ? exp :
 isIfExp(exp) ? makeIfExp(rewriteAllClass2ProcCExp(exp.test), rewriteAllClass2ProcCExp(exp.then), rewriteAllClass2ProcCExp(exp.alt)) :
 isAppExp(exp) ? makeAppExp(rewriteAllClass2ProcCExp(exp.rator), map(rewriteAllClass2ProcCExp, exp.rands)) :
 isProcExp(exp) ? makeProcExp(exp.args, map(rewriteAllClass2ProcCExp, exp.body)) :
-isLetExp(exp) ? makeLetExp( zipWith(makeBinding, map((x: Binding): string => x.var.var, exp.bindings), map((x: Binding): CExp => rewriteAllClass2ProcCExp(x.val), exp.bindings)),
+isLetExp(exp) ? makeLetExp(zipWith(makeBinding, map((x: Binding): string => x.var.var, exp.bindings), 
+                                                map((x: Binding): CExp => rewriteAllClass2ProcCExp(x.val), exp.bindings)),
                         map(rewriteAllClass2ProcCExp, exp.body)) :
 isClassExp(exp) ? rewriteAllClass2ProcCExp(class2proc(exp)) :
 exp;
 
 
-//(map((x:Binding): VarDecl => x.var),map((x:Binding): CExp => rewriteAllClass2ProcCExp(x.val)))
