@@ -1,7 +1,8 @@
-import { ClassExp, Binding, CExp, ProcExp,  Exp, Program, isExp, isProgram, makeProgram, makePrimOp, makeProcExp, makeIfExp, makeVarDecl, makeAppExp, makeVarRef, makeStrExp, makeBoolExp, isClassExp, makeLitExp } from "./L31-ast";
+import { isAtomicExp, isDefineExp, isCExp, ClassExp, Binding, CExp, ProcExp,  Exp, Program, isExp, isProgram, makeProgram, makePrimOp, makeProcExp, makeIfExp, makeVarDecl, makeAppExp, makeVarRef, makeStrExp, makeBoolExp, isClassExp, makeLitExp, makeDefineExp, isLitExp, isIfExp, isAppExp, isProcExp, isLetExp, makeLetExp, makeBinding, VarDecl } from "./L31-ast";
 import { Result, makeFailure, makeOk } from "../shared/result";
-import { map } from 'ramda';
+import { map, zipWith } from 'ramda';
 import { first, rest } from "../shared/list";
+
 
 /*
 Purpose: Transform ClassExp to ProcExp
@@ -27,12 +28,25 @@ Type: [Exp | Program] => Result<Exp | Program>
 */
 
 export const L31ToL3 = (exp: Exp | Program): Result<Exp | Program> =>
-isClassExp(exp) ? makeOk(class2proc(exp)) : makeFailure('@todo');
-/*
-isExp(exp) ? makeOk(rewriteAllClassExp(exp)) :
-isProgram(exp) ? makeOk(makeProgram(map(rewriteAllClassExp, exp.exps))) :
+isExp(exp) ? makeOk(rewriteAllClass2ProcExp(exp)) : 
+isProgram(exp) ? makeOk(makeProgram(map(rewriteAllClass2ProcExp, exp.exps))) :
 exp;
 
-const rewriteAllClassExp = (exp: Exp): Result<Exp> =>
-    makeFailure('@todo')
-    */
+const rewriteAllClass2ProcExp = (exp: Exp): Exp =>
+isCExp(exp) ? rewriteAllClass2ProcCExp(exp) :
+isDefineExp(exp) ? makeDefineExp(exp.var, rewriteAllClass2ProcCExp(exp.val)):
+exp;
+
+const rewriteAllClass2ProcCExp = (exp: CExp): CExp => 
+isAtomicExp(exp) ? exp :
+isLitExp(exp) ? exp :
+isIfExp(exp) ? makeIfExp(rewriteAllClass2ProcCExp(exp.test), rewriteAllClass2ProcCExp(exp.then), rewriteAllClass2ProcCExp(exp.alt)) :
+isAppExp(exp) ? makeAppExp(rewriteAllClass2ProcCExp(exp.rator), map(rewriteAllClass2ProcCExp, exp.rands)) :
+isProcExp(exp) ? makeProcExp(exp.args, map(rewriteAllClass2ProcCExp, exp.body)) :
+isLetExp(exp) ? makeLetExp( zipWith(makeBinding, map((x: Binding): string => x.var.var, exp.bindings), map((x: Binding): CExp => rewriteAllClass2ProcCExp(x.val), exp.bindings)),
+                        map(rewriteAllClass2ProcCExp, exp.body)) :
+isClassExp(exp) ? rewriteAllClass2ProcCExp(class2proc(exp)) :
+exp;
+
+
+//(map((x:Binding): VarDecl => x.var),map((x:Binding): CExp => rewriteAllClass2ProcCExp(x.val)))
