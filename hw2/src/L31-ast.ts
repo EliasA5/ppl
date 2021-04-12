@@ -1,6 +1,6 @@
 // ===========================================================
 // AST type models
-import { map, zipWith } from "ramda";
+import { all, map, zipWith } from "ramda";
 import { makeEmptySExp, makeSymbolSExp, SExpValue, makeCompoundSExp, valueToString } from '../imp/L3-value'
 import { first, second, rest, allT, isEmpty } from "../shared/list";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
@@ -250,7 +250,8 @@ if (methods.length !== 1 || !isGoodBindings(methods[0])){
 }
     const vars = map(b => b[0], methods[0]);
     const valsResult = mapResult(binding => parseL31CExp(second(binding)), methods[0]);
-    const bindingsResult = bind(valsResult, (vals: CExp[]) => makeOk(zipWith(makeBinding, vars, vals)));
+    const allProcExp = (exps: CExp[]): boolean => all(isProcExp, exps);
+    const bindingsResult: Result<Binding[]> = bind(valsResult, (vals: CExp[]) => allProcExp(vals) ? makeOk(zipWith(makeBinding, vars, vals)): makeFailure('non lambda expression in class method'));
     
 
 return isArray(fields) && allT(isString, fields) ? safe2((fields: VarDecl[], methods: Binding[]) => makeOk(makeClassExp(fields, methods)))
