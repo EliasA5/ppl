@@ -93,3 +93,6 @@ Thumbs.db
 
 # javascript files
 *.js
+
+#zip files
+*.zip
