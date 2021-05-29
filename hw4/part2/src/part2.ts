@@ -9,32 +9,55 @@ type PromisedStore<K, V> = {
 }
 
 
-// export function makePromisedStore<K, V>(): PromisedStore<K, V> {
-//     ???
-//     return {
-//         get(key: K) {
-//             ???
-//         },
-//         set(key: K, value: V) {
-//             ???
-//         },
-//         delete(key: K) {
-//             ???
-//         },
-//     }
-// }
+export function makePromisedStore<K, V>(): PromisedStore<K, V> {
+     const m = new Map();
+     return {
+         get(key: K) {
+             return new Promise<V>((resolve, reject) => 
+                                    (m.has(key) ? resolve(m.get(key)) : reject(MISSING_KEY))
+             )
+         },
+         set(key: K, value: V) {
+             return new Promise<void>((resolve, reject) => 
+                                     (m.set(key, value).has(key) ? resolve() : reject(MISSING_KEY))
+             )
+         },
+         delete(key: K) {
+             return new Promise<void>((resolve, reject) => {
+                                     return m.delete(key) ? resolve() : reject(MISSING_KEY);
+             })
+         },
+     }
+}
 
-// export function getAll<K, V>(store: PromisedStore<K, V>, keys: K[]): ??? {
-//     ???
-// }
+
+
+export function getAll<K, V>(store: PromisedStore<K, V>, keys: K[]): Promise<V[]> {
+    return Promise.all(keys.map(key => store.get(key)));
+}
+     
+
 
 /* 2.2 */
 
 // ??? (you may want to add helper functions here)
-//
-// export function asycMemo<T, R>(f: (param: T) => R): (param: T) => Promise<R> {
-//     ???
-// }
+
+export function asycMemo<T, R>(f: (param: T) => R): (param: T) => Promise<R> {
+     const store = makePromisedStore<T, R>();
+     return async (param: T): Promise<R> => {
+        try{
+            const l: R = await store.get(param);
+            return l;
+        }
+        catch{
+            const val: R = f(param);
+            await store.set(param, val);
+            return val;
+        }
+        
+     }
+
+}
 
 /* 2.3 */
 
