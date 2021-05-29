@@ -23,9 +23,9 @@ export function makePromisedStore<K, V>(): PromisedStore<K, V> {
              )
          },
          delete(key: K) {
-             return new Promise<void>((resolve, reject) => {
-                                     return m.delete(key) ? resolve() : reject(MISSING_KEY);
-             })
+             return new Promise<void>((resolve, reject) => 
+                                     (m.delete(key) ? resolve() : reject(MISSING_KEY))
+             )
          },
      }
 }
@@ -61,13 +61,22 @@ export function asycMemo<T, R>(f: (param: T) => R): (param: T) => Promise<R> {
 
 /* 2.3 */
 
-// export function lazyFilter<T>(genFn: () => Generator<T>, filterFn: ???): ??? {
-//     ???
-// }
+export function lazyFilter<T>(genFn: () => Generator<T>, filterFn: (pred: T) => boolean): () => Generator<T> {
+    return function*() {
+        const gen = genFn();
+        for(const k of gen)
+            if(filterFn(k))
+                yield k;
+    }
+}
 
-// export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: ???): ??? {
-//     ???
-// }
+export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (x: T) => R): () => Generator<R> {
+     return function*() {
+        const gen = genFn();
+        for(const k of gen)
+           yield mapFn(k);
+    };
+}
 
 /* 2.4 */
 // you can use 'any' in this question
