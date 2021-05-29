@@ -81,6 +81,22 @@ export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (x: T) => R): ()
 /* 2.4 */
 // you can use 'any' in this question
 
-// export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...(???)[]]): Promise<any> {
-//     ???
-// }
+export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...((a: any) => Promise<any>)[]]): Promise<any> {
+    let l: any = undefined;
+    for(let i = 0; i < fns.length; i++){
+        for(let j = 0; j < 3; j++){
+            try{
+                l = await fns[i](l);
+                break;
+            }
+            catch(e){
+                if(j == 2){
+                    return e
+                }
+                else
+                    await new Promise<void>((resolve) => setTimeout(() => resolve(), 2000));
+            }
+        }
+    }
+    return l;
+}
