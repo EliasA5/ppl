@@ -5,7 +5,7 @@
 // L51 extends L5 with:
 // typed class construct
 
-import { concat, chain, join, map, zipWith } from "ramda";
+import { concat, chain, join, map, zipWith, type , filter} from "ramda";
 import { Sexp, Token } from 's-expression';
 import { isCompoundSExp, isEmptySExp, isSymbolSExp, makeCompoundSExp, makeEmptySExp, makeSymbolSExp, SExpValue, valueToString } from '../imp/L5-value';
 import { allT, first, rest, second, isEmpty } from '../shared/list';
@@ -336,8 +336,10 @@ const parseClassExp = (params: Sexp[]): Result<ClassExp> =>
     parseGoodClassExp(params[1], params[2], params[3]);
 
 const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>
-    makeFailure("TODO parseGoodClassExp");
-
+    safe3((typeN: TVar, fields: VarDecl[], methods: Binding[]) => makeOk(makeClassExp(typeN, fields, methods)))
+                                                                    (isString(typeName) ? makeOk(makeTVar(typeName)) : makeFailure(`typeName not a string: ${typeName}`),
+                                                                    isArray(varDecls) ? mapResult((varDecl: Sexp) => parseVarDecl(varDecl), varDecls) : makeFailure(`bad fields: ${varDecls}`),
+                                                                    isGoodBindings(bindings) ? parseBindings(bindings) : makeFailure(`bad bindings: ${bindings}`));                                                             
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>
     bind(parseSExp(param), (sexp: SExpValue) => makeOk(makeLitExp(sexp)));
@@ -448,9 +450,12 @@ const unparseClassExp = (ce: ClassExp, unparseWithTVars?: boolean): Result<strin
 // L51: Collect named types in AST
 // Collect class expressions in parsed AST so that they can be passed to the type inference module
 
-export const parsedToClassExps = (p: Parsed): ClassExp[] => 
-    // TODO parsedToClassExps
-    [];
+export const parsedToClassExps = (p: Parsed): ClassExp[] =>{ 
+    const arr = isProgram(p) ? filter((exp: Exp) => isClassExp(exp), p.exps) :
+                isClassExp(p) ? [p] : []
+    return allT(isClassExp, arr) ? arr : [];
+}
+
 
 // L51 
 export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 
