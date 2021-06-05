@@ -238,21 +238,37 @@ export const typeofLetrec = (exp: A.LetrecExp, tenv: E.TEnv): Result<T.TExp> => 
 // Purpose: compute the type of a define
 // Typing rule:
 //   (define (var : texp) val)
-// TODO - write the typing rule for define-exp
+//      if type<val>(tenv) = texp
+//      
+//      then type<(define (var : texp) val)> = void
 export const typeofDefine = (exp: A.DefineExp, tenv: E.TEnv): Result<T.VoidTExp> => {
-    return makeFailure('TODO typeofDefine');
+    const valType = typeofExp(exp.val, E.makeExtendTEnv([exp.var.var], [exp.var.texp], tenv));
+    const constraint = bind(valType, (type: T.TExp) => checkEqualType(exp.var.texp, type, exp));
+    return bind(constraint, _=>makeOk(T.makeVoidTExp()));
+
 };
 
 // Purpose: compute the type of a program
 // Typing rule:
 //   (L5 <exp>+)
+//   <exp>+ = exp1, exp2,..., expn
+//   if type<exp1>(tenv) = t1
+//   ...
+//      type<expn>(tenv) = tn
+//   then type<(L5 <exp>+)> = tn
 export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>
     // similar to typeofExps but threads variables into tenv after define-exps
     isEmpty(exp.exps) ? makeFailure("Empty program") :
     typeofProgramExps(first(exp.exps), rest(exp.exps), tenv);
 
-const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> => 
-    makeFailure('TODO typeofProgramExps');
+const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> =>
+    isEmpty(exps) ? typeofExp(exp, tenv) : 
+    A.isDefineExp(exp) ? safe2((_ , valTE: T.TExp) => typeofProgramExps(first(exps), rest(exps), 
+                                                            E.makeExtendTEnv([exp.var.var], [valTE], tenv)))
+                                                        (typeofDefine(exp, tenv), typeofExp(exp.val, tenv)) :
+    A.isCExp(exp) ? typeofProgramExps(first(exps), rest(exps), tenv) :
+    makeFailure(`invalid expression in program: ${exp}`);
+
 
 
 // Purpose: compute the type of a literal expression
@@ -260,14 +276,22 @@ const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TE
 //      - for a symbol - record the value of the symbol in the SymbolTExp
 //        so that precise type checking can be made on ground symbol values.
 export const typeofLit = (exp: A.LitExp): Result<T.TExp> =>
-    makeFailure(`TODO typeofLit`);
+    V.isSymbolSExp(exp.val) ? makeOk(T.makeSymbolTExp(exp.val)) :
+    V.isCompoundSExp(exp.val) ? makeOk(T.makePairTExp()) :
+    makeFailure("Not a symbol or a pair");
 
 // Purpose: compute the type of a set! expression
 // Typing rule:
 //   (set! var val)
-// TODO - write the typing rule for set-exp
+//      if type<val>(tenv) = t1
+//         type<var>(tenv) = t1
+//      then type<(set! var val)> = void
+
 export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
-    return makeFailure('TODO typeofSet');
+    const typeVarRef = typeofExp(exp.var, tenv);
+    const typeVal = typeofExp(exp.val, tenv);
+    const constraint = safe2((varRefT: T.TExp, valT: T.TExp) => checkEqualType(varRefT, valT, exp))(typeVarRef, typeVal);
+    return bind(constraint, _ => makeOk(T.makeVoidTExp()));
 };
 
 // Purpose: compute the type of a class-exp(type fields methods)
@@ -278,5 +302,11 @@ export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
 //      type<method_k>(class-tenv) = mk
 // Then type<class(type fields methods)>(tend) = = [t1 * ... * tn -> type]
 export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
-    return makeFailure("TODO typeofClass");
+    const vars = R.map((b) => b.var, exp.fields);
+    const varTEs = R.map((b) => b.texp, exp.fields)
+    const extTEnv = E.makeExtendTEnv(vars, varTEs, tenv);
+    const methods = R.map((b) => b.val, exp.methods);
+    const constraint = bind(typeofExps(R.map((b) => b.val, exp.methods), extTEnv), _ => makeOk(true));
+
+    return bind(constraint, _ => makeOk(T.makeClassTExp(exp.typeName.var, R.zipWith((x,y) => [x,y], vars, varTEs))));
 };
