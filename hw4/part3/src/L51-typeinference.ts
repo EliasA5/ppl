@@ -267,11 +267,11 @@ export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>
 
 const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> =>
     isEmpty(exps) ? typeofExp(exp, tenv) : 
-    A.isDefineExp(exp) ? bind(typeofDefine(exp, tenv), _ => typeofProgramExps(first(exps), rest(exps), 
-                                                            E.makeExtendTEnv([exp.var.var], [exp.var.texp], tenv))) :
+    bind(typeofExp(exp, tenv), _ => A.isDefineExp(exp) ? typeofProgramExps(first(exps), rest(exps), 
+                                                            E.makeExtendTEnv([exp.var.var], [exp.var.texp], tenv)) :
                                                         
     A.isCExp(exp) ? typeofProgramExps(first(exps), rest(exps), tenv) :
-    makeFailure(`invalid expression in program: ${exp}`);
+    makeFailure(`invalid expression in program: ${exp}`));
 
 
 
