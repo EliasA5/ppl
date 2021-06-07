@@ -268,12 +268,10 @@ export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>
 const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> =>
     isEmpty(exps) ? typeofExp(exp, tenv) : 
     bind(typeofExp(exp, tenv), _ => A.isDefineExp(exp) ? typeofProgramExps(first(exps), rest(exps), 
-                                                            E.makeExtendTEnv([exp.var.var], [exp.var.texp], tenv)) :
-                                                        
-    A.isCExp(exp) ? typeofProgramExps(first(exps), rest(exps), tenv) :
-    makeFailure(`invalid expression in program: ${exp}`));
-
-
+                                    E.makeExtendTEnv([exp.var.var], [exp.var.texp], tenv)) :
+                                    A.isCExp(exp) ? typeofProgramExps(first(exps), rest(exps), tenv) :                    
+                                    makeFailure(`invalid expression in program: ${exp}`));
+    
 
 // Purpose: compute the type of a literal expression
 //      - Only need to cover the case of Symbol and Pair
