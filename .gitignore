@@ -99,3 +99,8 @@ Thumbs.db
 
 #pdf files
 *.pdf
+
+#DrRacket temp files
+*.bak
+*.dep
+*.zo
