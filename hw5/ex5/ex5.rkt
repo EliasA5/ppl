@@ -50,7 +50,12 @@
 ; Purpose: Returns the concatination of the given two lists, with cont pre-processing
 (define append$
  (lambda (lst1 lst2 cont)
-   #f;@TODO
+   (if (empty? lst1)
+       (cont lst2)
+       (append$ (cdr lst1)
+                lst2
+                (lambda (appended)
+                  (cont (cons (car lst1) appended)))))
   )
 )
 
