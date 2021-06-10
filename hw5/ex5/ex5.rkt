@@ -5,6 +5,7 @@
 (define integers-from
   (lambda (n)
     (cons-lzl n (lambda () (integers-from (+ n 1))))))
+(define id (lambda (x) x))
 
 (define cons-lzl cons)
 (define empty-lzl? empty?)
@@ -14,7 +15,7 @@
   (lambda (lzl)
     ((cdr lzl))))
 
-(define leaf? (lambda (x) (not (list? x))))
+
 
 ;; Signature: map-lzl(f, lz)
 ;; Type: [[T1 -> T2] * Lzl(T1) -> Lzl(T2)]
@@ -66,7 +67,21 @@
 (define leaf? (lambda (x) (not (list? x))))
 (define equal-trees$ 
  (lambda (tree1 tree2 succ fail)
-   #f;@TODO
+   (cond ((and (leaf? tree1) (leaf? tree2)) (succ (cons tree1 tree2)))
+         ((or (and (leaf? tree1) (not (leaf? tree2)))
+              (and (not (leaf? tree1)) (leaf? tree2))
+              (and (empty? tree1) (not (empty? tree2)))
+              (and (not (empty? tree1)) (empty? tree2))) (fail (cons tree1 tree2)))
+         ((and (empty? tree1) (empty? tree2)) (succ '()))
+         (else (equal-trees$ (car tree1)
+                             (car tree2)
+                             (lambda (equal-car)
+                               (equal-trees$ (cdr tree1)
+                                             (cdr tree2)
+                                             (lambda (equal-cdr)
+                                               (succ (cons equal-car equal-cdr)))
+                                             fail))
+                             fail)))       
  )
 )
 
@@ -76,7 +91,9 @@
 ; Purpose: Returns the reduced value of the given lazy list
 (define reduce1-lzl 
   (lambda (reducer init lzl)
-   #f ;@TODO
+   (if (empty-lzl? lzl)
+       init
+       (reduce1-lzl reducer (reducer init (head lzl)) (tail lzl)))
   )
 )  
 
@@ -86,7 +103,12 @@
 ; Purpose: Returns the reduced value of the first n items in the given lazy list
 (define reduce2-lzl 
   (lambda (reducer init lzl n)
-    #f ;@TODO
+    (if (or (empty-lzl? lzl) (= n 0))
+        init
+        (reduce2-lzl reducer
+                    (reducer init (head lzl))
+                    (tail lzl)
+                    (- n 1)))
   )
 )  
 
@@ -96,17 +118,25 @@
 ; Purpose: Returns the reduced values of the given lazy list items as a lazy list
 (define reduce3-lzl 
   (lambda (reducer init lzl)
-    #f ;@TODO
+    (if (empty-lzl? lzl)
+        empty-lzl
+        (let ( (new-init (reducer init (head lzl))) )
+            (cons-lzl new-init (lambda () (reduce3-lzl reducer
+                                            new-init
+                                            (tail lzl)))))
+    )
   )
-)  
- 
+) 
+
+
+         
 ;;; Q2e
 ; Signature: integers-steps-from(from,step) 
 ; Type: Number * Number -> Lzl<Number>
 ; Purpose: Returns a list of integers from 'from' with 'steps' jumps
 (define integers-steps-from
   (lambda (from step)
-    #f ; @TODO
+    (cons-lzl from (lambda () (integers-steps-from (+ from step) step)))
   )
 )
 
@@ -116,6 +146,9 @@
 ; Purpose: Returns the approximations of pi as a lazy list
 (define generate-pi-approximations
   (lambda ()
-    #f ; @TODO
+    (map-lzl (lambda (b) (* b 8))
+             (reduce3-lzl (lambda (prev a) (+ prev (/ 1 (* a (+ a 2)))))
+                 0
+                 (integers-steps-from 1 4)))
    )
  )
